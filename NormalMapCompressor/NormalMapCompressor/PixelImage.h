@@ -23,6 +23,12 @@ public:
      */
     PixelImage* GetResized(unsigned int newWidth, unsigned int newHeight) const;
 
+    /**
+     * Returns a half-rez copy of the image.  Image dimensions prior to resize MUST be
+     * an even number (better yet, power of two, as this is called many many times).
+     */
+    PixelImage* FastMipResize() const;
+
 
 #ifdef _DEBUG
     void DebugPrintImage8Bit() const;

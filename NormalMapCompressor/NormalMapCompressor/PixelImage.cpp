@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cmath>
 #include "PixelImage.h"
+#include <iostream>
 
 PixelImage::PixelImage(unsigned int width, unsigned int height):
 m_width(width),
@@ -99,6 +100,91 @@ PixelImage* PixelImage::GetResized(unsigned int newWidth, unsigned int newHeight
     }
 
     return resized;
+}
+
+PixelImage* PixelImage::FastMipResize() const
+{
+    // ensure dimensions are even... or one.
+    if ((m_width > 1) && ((m_width & 1) != 0))
+    {
+        std::cerr << "Attempted to call FastMipResize() on image that didn't have even (or one) width!  Aborting..." << std::endl;
+        exit(1);
+    }
+
+    if ((m_height > 1) && ((m_height & 1) != 0))
+    {
+        std::cerr << "Attempted to call FastMipResize() on image that didn't have even (or one) height!  Aborting..." << std::endl;
+        exit(1);
+    }
+
+    if (m_width == 1)
+    {
+        if (m_height == 1)
+        {
+            // already minimum size, return nothing.
+            return NULL;
+        }
+
+        // Minimum width... only resize height
+        unsigned int newWidth = 1;
+        unsigned int newHeight = m_height / 2;
+        PixelImage* resized = new PixelImage(newWidth, newHeight);
+
+        for (unsigned int y = 0; y < newHeight; ++y)
+        {
+            for (unsigned int c = 0; c < NUM_CHANNELS; ++c)
+            {
+                PixelType value = (GetPixelChannelValue(0, y/2, c) +
+                    GetPixelChannelValue(0, y / 2 + 1, c)) * (PixelType)0.5;
+                resized->SetPixelChannelValue(0, y, c, value);
+            }
+        }
+
+        return resized;
+    }
+    else if (m_height == 1)
+    {
+        // Minimum height... only resize width
+        unsigned int newWidth = m_width / 2;
+        unsigned int newHeight = 1;
+        PixelImage* resized = new PixelImage(newWidth, newHeight);
+
+        for (unsigned int x = 0; x < newWidth; ++x)
+        {
+            for (unsigned int c = 0; c < NUM_CHANNELS; ++c)
+            {
+                PixelType value = (GetPixelChannelValue(x / 2, 0, c) +
+                    GetPixelChannelValue(x / 2 + 1, 0, c)) * (PixelType)0.5;
+                resized->SetPixelChannelValue(x, 0, c, value);
+            }
+        }
+
+        return resized;
+    }
+    else
+    {
+        // Resize both.
+        unsigned int newWidth = m_width / 2;
+        unsigned int newHeight = m_height / 2;
+        PixelImage* resized = new PixelImage(newWidth, newHeight);
+        
+        for (unsigned int y = 0; y < newHeight; ++y)
+        {
+            for (unsigned int x = 0; x < newWidth; ++x)
+            {
+                for (unsigned int c = 0; c < NUM_CHANNELS; ++c)
+                {
+                    PixelType value =  (GetPixelChannelValue(x / 2, y / 2, c) +
+                                        GetPixelChannelValue(x / 2 + 1, y / 2, c) +
+                                        GetPixelChannelValue(x / 2, y / 2 + 1, c) +
+                                        GetPixelChannelValue(x / 2 + 1, y / 2 + 1, c)) * (PixelType)0.25;
+                    resized->SetPixelChannelValue(x, y, c, value);
+                }
+            }
+        }
+
+        return resized;
+    }
 }
 
 #ifdef _DEBUG

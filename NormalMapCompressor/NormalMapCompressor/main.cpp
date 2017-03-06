@@ -50,4 +50,31 @@ int main(int argc, char* argv[])
     newImg->DebugPrintImage8Bit();
     */
 
+    
+    // Test fast mip resizing.
+    PixelImage* img = new PixelImage(8, 32);
+    for (unsigned int y = 0; y < img->GetHeight(); ++y)
+    {
+        for (unsigned int x = 0; x < img->GetWidth(); ++x)
+        {
+            unsigned int flip = (x + y) % 2;
+            img->SetPixelChannelValue(x, y, 0, (PixelType)flip);
+            img->SetPixelChannelValue(x, y, 1, (PixelType)flip);
+            img->SetPixelChannelValue(x, y, 2, (PixelType)flip);
+        }
+    }
+
+    img->DebugPrintImage8Bit();
+
+    std::cout << "\nMipping...:";
+
+    PixelImage* newImg = img->FastMipResize();
+    int mipLevel = 1;
+    while (newImg != NULL)
+    {
+        std::cout << "\nMip level = " << mipLevel++ << std::endl;
+        newImg->DebugPrintImage8Bit();
+        newImg = newImg->FastMipResize();
+    }
+
 }
