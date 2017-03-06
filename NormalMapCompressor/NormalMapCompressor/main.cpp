@@ -25,20 +25,29 @@ int main(int argc, char* argv[])
     }
     */
     
-    PixelImage* psdInput = ReadPSDFile("C:\\Users\\trevo\\Desktop\\psdTests\\ideal_alpha.psd");
+    //PixelImage* psdInput = ReadPSDFile("C:\\Users\\trevo\\Desktop\\psdTests\\ideal_alpha.psd");
     //PixelImage* psdInput = ReadPSDFile(argv[1]);
-    unsigned int width = psdInput->GetWidth();
-    unsigned int height = psdInput->GetHeight();
-    for (unsigned int y = 0; y < height; ++y)
+
+    /*
+    // Test image resizing.
+    PixelImage* img = new PixelImage(8, 8);
+    for (unsigned int y = 0; y < 8; ++y)
     {
-        for (unsigned int x = 0; x < width; ++x)
+        for (unsigned int x = 0; x < 8; ++x)
         {
-            int r = (int)((psdInput->GetPixelChannelValue(x, y, 0) * 255.0) + 0.5);
-            int g = (int)((psdInput->GetPixelChannelValue(x, y, 1) * 255.0) + 0.5);
-            int b = (int)((psdInput->GetPixelChannelValue(x, y, 2) * 255.0) + 0.5);
-            printf("(%u, %u) = (%u, %u, %u)\n", x, y, r, g, b);
+            unsigned int flip = (x + y) % 2;
+            img->SetPixelChannelValue(x, y, 0, (double)flip);
+            img->SetPixelChannelValue(x, y, 1, (double)flip);
+            img->SetPixelChannelValue(x, y, 2, (double)flip);
         }
     }
-    
+
+    img->DebugPrintImage8Bit();
+
+    std::cout << "\nNewImage:\n";
+
+    PixelImage* newImg = img->GetResized(4, 4);
+    newImg->DebugPrintImage8Bit();
+    */
 
 }

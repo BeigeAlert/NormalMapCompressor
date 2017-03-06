@@ -18,6 +18,17 @@ public:
 
     PixelType GetPixelChannelValue(unsigned int x, unsigned int y, unsigned int channelNumber) const;
 
+    /**
+     * Returns a NEW image, resized.  Old one remains untouched.
+     */
+    PixelImage* GetResized(unsigned int newWidth, unsigned int newHeight) const;
+
+
+#ifdef _DEBUG
+    void DebugPrintImage8Bit() const;
+#endif
+
+
     unsigned int GetWidth()  { return m_width;  }
     unsigned int GetHeight() { return m_height; }
 
