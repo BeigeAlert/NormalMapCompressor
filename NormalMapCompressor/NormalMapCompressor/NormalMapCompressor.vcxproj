@@ -11,13 +11,19 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DDSCompressor.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Matrix3x3.cpp" />
     <ClCompile Include="PixelImage.cpp" />
     <ClCompile Include="PSDReader.cpp" />
+    <ClCompile Include="Vector3.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DDSCompressor.h" />
+    <ClInclude Include="Matrix3x3.h" />
     <ClInclude Include="PixelImage.h" />
     <ClInclude Include="PSDReader.h" />
+    <ClInclude Include="Vector3.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{F77472B5-725B-45BC-8DDE-715DA75E962B}</ProjectGuid>

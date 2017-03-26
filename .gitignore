@@ -1,1 +1,9 @@
 *.sdf
+*.exe
+*.pdb
+*.tlog
+*.log
+*.obj
+*.idb
+*.ilk
+*.suo
