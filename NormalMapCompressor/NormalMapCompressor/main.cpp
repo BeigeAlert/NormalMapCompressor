@@ -8,10 +8,12 @@
 #include "DXT1Compressor.h"
 #include <math.h>
 #include <algorithm>
+#include "DDSWriter.h"
+#include <fstream>
 
 int main(int argc, char* argv[])
 {
-    
+    /*
     if (argc != 3)
     {
         std::cout <<
@@ -28,7 +30,8 @@ int main(int argc, char* argv[])
             "    - Alpha channels and transparency are ignored" << std::endl << std::endl;
         exit(0);
     }
-    
+    */
+
     PixelImage* psdInput = ReadPSDFile("C:\\Users\\trevo\\Desktop\\psdTests\\ideal_alpha.psd");
     //PixelImage* psdInput = ReadPSDFile(argv[1]);
 
@@ -64,7 +67,7 @@ int main(int argc, char* argv[])
         dds.mips[i] = ConvertImageToBlocks(mips[i]);
     }
 
-    WriteDDSFile(dds, argv[2]);
-
-
+    //WriteDDSFile(&dds, argv[2]);
+    WriteDDSFile(&dds, "C:\\users\\trevo\\desktop\\test.dds");
+    
 }

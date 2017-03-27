@@ -3,6 +3,7 @@
 #include <algorithm>
 #include "Matrix3x3.h"
 #include <iostream>
+#include "Vector3.h"
 
 std::string DebugColorBits(int color)
 {
@@ -45,8 +46,8 @@ void ConstructPixelBlockFromImage(PixelImage* image, PixelBlock& block, int bx, 
 
     unsigned int topLeftX = bx * 4;
     unsigned int topLeftY = by * 4;
-    unsigned int botRightX = std::min(topLeftX + 4, image->GetWidth() - 1);
-    unsigned int botRightY = std::min(topLeftY + 4, image->GetHeight() - 1);
+    unsigned int botRightX = std::min(topLeftX + 3, image->GetWidth() - 1);
+    unsigned int botRightY = std::min(topLeftY + 3, image->GetHeight() - 1);
 
     int pxCount = ((botRightX - topLeftX) + 1) * ((botRightY - topLeftY) + 1);
     int blockWidth = (botRightX - topLeftX) + 1;
@@ -59,9 +60,16 @@ void ConstructPixelBlockFromImage(PixelImage* image, PixelBlock& block, int bx, 
             int index = y * blockWidth + x;
             sourceColors[index] = Vector3();
             sourceColors[index].r = image->GetPixelChannelValue(x, y, 0);
-            sourceColors[index].r = image->GetPixelChannelValue(x, y, 1);
-            sourceColors[index].r = image->GetPixelChannelValue(x, y, 2);
+            sourceColors[index].g = image->GetPixelChannelValue(x, y, 1);
+            sourceColors[index].b = image->GetPixelChannelValue(x, y, 2);
         }
+    }
+
+    // DEBUG
+    std::cout << "sourceColors = \n";
+    for (int i = 0; i < pxCount; ++i)
+    {
+        sourceColors[i].Print();
     }
 
     // To determine the color_0 and color_1 values, we calculate the line of best fit
@@ -76,11 +84,31 @@ void ConstructPixelBlockFromImage(PixelImage* image, PixelBlock& block, int bx, 
     }
     centroid /= float(pxCount);
 
+    std::cout << "Centroid = ";
+    centroid.Print();
+
+    // DEBUG
+    std::cout << "sourceColors = \n";
+    for (int i = 0; i < pxCount; ++i)
+    {
+        sourceColors[i].Print();
+    }
+
     // Calculate each color difference from centroid
     Vector3* offsets = (Vector3*)malloc(sizeof(Vector3) * pxCount);
     for (int i = 0; i < pxCount; ++i)
     {
         offsets[i] = sourceColors[i] - centroid;
+    }
+
+    std::cout << "Centroid = ";
+    centroid.Print();
+
+    // DEBUG
+    std::cout << "sourceColors = \n";
+    for (int i = 0; i < pxCount; ++i)
+    {
+        sourceColors[i].Print();
     }
 
     // Create the covariance matrix
