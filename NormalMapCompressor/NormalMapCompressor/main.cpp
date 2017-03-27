@@ -5,10 +5,13 @@
 #include "PixelImage.h"
 #include "Vector3.h"
 #include "Matrix3x3.h"
+#include "DXT1Compressor.h"
+#include <math.h>
+#include <algorithm>
 
 int main(int argc, char* argv[])
 {
-    /*
+    
     if (argc != 3)
     {
         std::cout <<
@@ -25,138 +28,43 @@ int main(int argc, char* argv[])
             "    - Alpha channels and transparency are ignored" << std::endl << std::endl;
         exit(0);
     }
-    */
     
-    //PixelImage* psdInput = ReadPSDFile("C:\\Users\\trevo\\Desktop\\psdTests\\ideal_alpha.psd");
+    PixelImage* psdInput = ReadPSDFile("C:\\Users\\trevo\\Desktop\\psdTests\\ideal_alpha.psd");
     //PixelImage* psdInput = ReadPSDFile(argv[1]);
 
-    /*
-    // Test image resizing.
-    PixelImage* img = new PixelImage(8, 8);
-    for (unsigned int y = 0; y < 8; ++y)
+    // Ensure image dimensions are powers of 2.  If not, increase them to the nearest
+    // power of 2.
+    int newWidth = pow(2, ceil(log2(psdInput->GetWidth())));
+    int newHeight = pow(2, ceil(log2(psdInput->GetHeight())));
+
+    PixelImage* resizedInput = psdInput;
+    if (newWidth != psdInput->GetWidth() || newHeight != psdInput->GetHeight())
     {
-        for (unsigned int x = 0; x < 8; ++x)
-        {
-            unsigned int flip = (x + y) % 2;
-            img->SetPixelChannelValue(x, y, 0, (double)flip);
-            img->SetPixelChannelValue(x, y, 1, (double)flip);
-            img->SetPixelChannelValue(x, y, 2, (double)flip);
-        }
+        resizedInput = psdInput->GetResized(newWidth, newHeight);
     }
 
-    img->DebugPrintImage8Bit();
+    // Create mip maps for image.
+    int numLevels = (int)log2(std::max(newWidth, newHeight));
+    PixelImage** mips = (PixelImage**)malloc(sizeof(PixelImage*) * numLevels);
 
-    std::cout << "\nNewImage:\n";
-
-    PixelImage* newImg = img->GetResized(4, 4);
-    newImg->DebugPrintImage8Bit();
-    */
-
-    /*
-    // Test fast mip resizing.
-    PixelImage* img = new PixelImage(8, 32);
-    for (unsigned int y = 0; y < img->GetHeight(); ++y)
+    mips[0] = resizedInput;
+    for (int i = 1; i < numLevels; ++i)
     {
-        for (unsigned int x = 0; x < img->GetWidth(); ++x)
-        {
-            unsigned int flip = (x + y) % 2;
-            img->SetPixelChannelValue(x, y, 0, (PixelType)flip);
-            img->SetPixelChannelValue(x, y, 1, (PixelType)flip);
-            img->SetPixelChannelValue(x, y, 2, (PixelType)flip);
-        }
+        mips[i] = mips[i - 1]->FastMipResize();
     }
 
-    img->DebugPrintImage8Bit();
-
-    std::cout << "\nMipping...:";
-
-    PixelImage* newImg = img->FastMipResize();
-    int mipLevel = 1;
-    while (newImg != NULL)
+    // Compress the data.
+    CompressedMipMapTexture dds;
+    dds.numMips = numLevels;
+    dds.sizeX = newWidth;
+    dds.sizeY = newHeight;
+    dds.mips = (CompressedImage**)malloc(sizeof(CompressedImage*) * numLevels);
+    for (int i = 0; i < numLevels; ++i)
     {
-        std::cout << "\nMip level = " << mipLevel++ << std::endl;
-        newImg->DebugPrintImage8Bit();
-        newImg = newImg->FastMipResize();
-    }
-    */
-
-    // TEST DECOMPOSITION
-
-    //Vector3* vects = (Vector3*)malloc(sizeof(Vector3) * 8);
-    /*
-    vects[0] = Vector3(-1, -0.5, -0.5);
-    vects[1] = Vector3(-1,  0.5, -0.5);
-    vects[2] = Vector3(-1, -0.5,  0.5);
-    vects[3] = Vector3(-1,  0.5,  0.5);
-    vects[4] = Vector3( 1, -0.5, -0.5);
-    vects[5] = Vector3( 1,  0.5, -0.5);
-    vects[6] = Vector3( 1, -0.5,  0.5);
-    vects[7] = Vector3( 1,  0.5,  0.5);
-    */
-
-    /*
-    Vector3 X = Vector3(0.8666, 0.5, 0.0);
-    Vector3 Y = Vector3(-0.5, 0.8666, 0.0);
-    Vector3 Z = Vector3(0.0, 0.0, 1.0);
-    */
-    /*
-    Vector3 X = Vector3(0.5, 0.8666, 0.0);
-    Vector3 Y = Vector3(-0.8666, 0.5, 0.0);
-    Vector3 Z = Vector3(0.0, 0.0, 1.0);
-
-    vects[0] = X * 8 + Y * 2 + Z * 2;
-    vects[1] = X * 8 - Y * 2 + Z * 2;
-    vects[2] = X * 8 + Y * 2 - Z * 2;
-    vects[3] = X * 8 - Y * 2 - Z * 2;
-    vects[4] = X * -8 + Y * 2 + Z * 2;
-    vects[5] = X * -8 - Y * 2 + Z * 2;
-    vects[6] = X * -8 + Y * 2 - Z * 2;
-    vects[7] = X * -8 - Y * 2 - Z * 2;
-    */
-    /*
-    vects[0] = Vector3(-1.0, -1.0, -1.0);
-    vects[1] = Vector3(-1.0, -1.0,  1.0);
-    vects[2] = Vector3(-1.0,  1.0, -1.0);
-    vects[3] = Vector3(-1.0,  1.0,  1.0);
-    vects[4] = Vector3( 1.0, -1.0, -1.0);
-    vects[5] = Vector3( 1.0, -1.0,  1.0);
-    vects[6] = Vector3( 1.0,  1.0, -1.0);
-    vects[7] = Vector3( 1.0,  1.0,  1.0);
-
-    for (int i = 0; i < 8; ++i)
-    {
-        vects[i].Print();
+        dds.mips[i] = ConvertImageToBlocks(mips[i]);
     }
 
-    Matrix3x3 cov = Matrix3x3();
-    for (int r = 0; r < 3; ++r)
-    {
-        for (int c = 0; c < 3; ++c)
-        {
-            float sum = 0.0;
-            for (int k = 0; k < 8; ++k)
-            {
-                sum += vects[k][r] * vects[k][c];
-            }
-            *cov(r, c) = sum/7;
-        }
-    }
+    WriteDDSFile(dds, argv[2]);
 
-    std::cout << "Covariance matrix:" << std::endl;
-    cov.Print();
-    std::cout << std::endl;
-
-    Matrix3x3 rotation = Matrix3x3();
-    Vector3 scale = cov.SpectralDecomposition(rotation);
-
-    std::cout << "Rotation matrix:" << std::endl;
-    rotation.Print();
-
-    std::cout << std::endl;
-    std::cout << "Scale:" << std::endl;
-    scale.Print();
-
-    std::cout << std::endl;
-    */
 
 }

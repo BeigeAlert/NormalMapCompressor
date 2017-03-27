@@ -6,7 +6,9 @@ public:
     Vector3(float x, float y, float z);
     Vector3(float data[]);
 
-    float operator[](int index);
+    float& operator[](int index);
+    float& operator[](int index) const;
+
     Vector3 operator*(const Vector3& other) const;
     Vector3 operator*(const float& other) const;
     Vector3 operator/(const Vector3& other) const;
@@ -33,8 +35,23 @@ public:
     void Print() const;
 
 public:
-    float x;
-    float y;
-    float z;
+    union
+    {
+        struct
+        {
+            float x;
+            float y;
+            float z;
+        };
+
+        struct
+        {
+            float r;
+            float g;
+            float b;
+        };
+
+        float data[3];
+    };
 };
 

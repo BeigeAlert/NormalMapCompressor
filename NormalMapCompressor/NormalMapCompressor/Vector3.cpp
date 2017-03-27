@@ -2,7 +2,6 @@
 #include <cmath>
 #include <cstdio>
 
-
 Vector3::Vector3()
 {
     x = 0.0;
@@ -140,19 +139,9 @@ float Vector3::GetLength() const
     return sqrt(GetLengthSquared());
 }
 
-float Vector3::operator[](int index)
+float& Vector3::operator[](int index)
 {
-    switch (index)
-    {
-    case 0:
-        return x;
-    case 1:
-        return y;
-    case 2:
-        return z;
-    default:
-        return 0.0;
-    }
+    return data[index];
 }
 
 void Vector3::Print() const

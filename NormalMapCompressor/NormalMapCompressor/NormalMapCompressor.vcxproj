@@ -11,7 +11,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="DDSCompressor.cpp" />
+    <ClCompile Include="DDSWriter.cpp" />
+    <ClCompile Include="DXT1Compressor.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Matrix3x3.cpp" />
     <ClCompile Include="PixelImage.cpp" />
@@ -19,7 +20,8 @@
     <ClCompile Include="Vector3.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DDSCompressor.h" />
+    <ClInclude Include="DDSWriter.h" />
+    <ClInclude Include="DXT1Compressor.h" />
     <ClInclude Include="Matrix3x3.h" />
     <ClInclude Include="PixelImage.h" />
     <ClInclude Include="PSDReader.h" />
