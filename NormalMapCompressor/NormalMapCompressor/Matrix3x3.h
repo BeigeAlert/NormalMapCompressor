@@ -13,6 +13,7 @@ public:
     void operator=(const Matrix3x3& other);
 
     Vector3 GetRow(int r) const;
+    Vector3 GetColumn(int c) const;
 
     /**
      * Returns scaling vector, rotation in U.

@@ -32,3 +32,5 @@ int CompressColor(const Vector3& color);
 
 std::string DebugColorBits(int color);
 
+void ConstructPixelBlockFromImage(PixelImage* image, PixelBlock& block, int bx, int by);
+

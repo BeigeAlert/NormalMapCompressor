@@ -29,6 +29,11 @@ Vector3 Matrix3x3::GetRow(int r) const
     return Vector3(m_data[r][0], m_data[r][1], m_data[r][2]);
 }
 
+Vector3 Matrix3x3::GetColumn(int c) const
+{
+    return Vector3(m_data[0][c], m_data[1][c], m_data[2][c]);
+}
+
 // copy assignment
 void Matrix3x3::operator=(const Matrix3x3& other)
 {

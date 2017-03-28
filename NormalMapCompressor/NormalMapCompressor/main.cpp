@@ -69,5 +69,41 @@ int main(int argc, char* argv[])
 
     //WriteDDSFile(&dds, argv[2]);
     WriteDDSFile(&dds, "C:\\users\\trevo\\desktop\\test.dds");
+    
+    /*
+    PixelImage* debugImage = new PixelImage(4, 4);
+    for (int i = 0; i < 4; ++i)
+    {
+        for (int c = 0; c < 3; ++c)
+        {
+            for (int y = 0; y < 4; ++y)
+            {
+                debugImage->SetPixelChannelValue(i, y, c, i * 0.33333);
+            }
+        }
+    }
+
+    PixelBlock debugPixelBlock;
+    ConstructPixelBlockFromImage(debugImage, debugPixelBlock, 0, 0);
+
+    printf("color0 = %d\n", debugPixelBlock.color0);
+    printf("color1 = %d\n", debugPixelBlock.color1);
+    printf("interps:\n");
+    for (int y = 0; y < 4; ++y)
+    {
+        printf("|");
+        for (int x = 0; x < 4; ++x)
+        {
+            printf(" %d ", debugPixelBlock.interp[y * 4 + x]);
+        }
+        printf("|\n");
+    }
+    */
+    
+#ifdef _DEBUG
+    // add a pause at the end so we can see console output... only in debug though.
+    std::cout << "done." << std::endl;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+#endif
 
 }

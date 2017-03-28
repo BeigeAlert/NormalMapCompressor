@@ -33,16 +33,15 @@ int CompressColor(const Vector3& color)
 {
     // DXT-1 (no alpha) stores RGB as 16 bit values. rrrrr gggggg bbbbb
     int value = 0;
-    value += (int)(color.r * ((1 << 5)-1)) << 11;
-    value += (int)(color.g * ((1 << 6)-1)) << 5;
-    value += (int)(color.b * ((1 << 5)-1));
+    value += (int)(color.r * ((1 << 5)-1) + 0.5) << 11;
+    value += (int)(color.g * ((1 << 6)-1) + 0.5) << 5;
+    value += (int)(color.b * ((1 << 5)-1) + 0.5);
 
     return value;
 }
 
 void ConstructPixelBlockFromImage(PixelImage* image, PixelBlock& block, int bx, int by)
 {
-    // TODO return early if only one pixel. (eg lowest mip level)
 
     unsigned int topLeftX = bx * 4;
     unsigned int topLeftY = by * 4;
@@ -114,7 +113,7 @@ void ConstructPixelBlockFromImage(PixelImage* image, PixelBlock& block, int bx, 
         }
     }
 
-    Vector3 bestFitVector = rotation.GetRow(largest);
+    Vector3 bestFitVector = rotation.GetColumn(largest);
     
     // pick color_0 and color_1 based on max and min colors along the line...
     // would almost certainly be better to choose colors based on the 4 evenly
@@ -126,7 +125,7 @@ void ConstructPixelBlockFromImage(PixelImage* image, PixelBlock& block, int bx, 
     float* lineVals = (float*)malloc(sizeof(float) * pxCount);
     for (int i = 0; i < pxCount; ++i)
     {
-        lineVals[i] = offsets->dot(bestFitVector);
+        lineVals[i] = offsets[i].dot(bestFitVector);
     }
 
     // find the min and max values on the line
@@ -163,14 +162,14 @@ void ConstructPixelBlockFromImage(PixelImage* image, PixelBlock& block, int bx, 
     int minColorComp = CompressColor(minColor);
     int maxColorComp = CompressColor(maxColor);
 
-    if (minColorComp > maxColorComp)
+    if (minColorComp < maxColorComp)
     {
         color1Index = minValueIndex;
         color0Index = maxValueIndex;
         block.color1 = minColorComp;
         block.color0 = maxColorComp;
     }
-    else if (maxColorComp > minColorComp)
+    else if (maxColorComp < minColorComp)
     {
         color1Index = maxValueIndex;
         color0Index = minValueIndex;
@@ -207,7 +206,7 @@ void ConstructPixelBlockFromImage(PixelImage* image, PixelBlock& block, int bx, 
     for (int i = 0; i < pxCount; ++i)
     {
         float t = fmin(fmax((lineVals[i] - color0LineVal) * diffInv, 0.0), 1.0);
-        int zone = (t * 4.0) + 0.5;
+        int zone = (t * 3.0) + 0.5;
 
         int x = i % blockWidth;
         int y = i / blockWidth;
@@ -218,7 +217,7 @@ void ConstructPixelBlockFromImage(PixelImage* image, PixelBlock& block, int bx, 
         // h g f e
         // l k j i
         // p o n m
-        x = 4 - x;
+        //x = 3 - x;
 
         int index = y * 4 + x;
 
