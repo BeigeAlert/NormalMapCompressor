@@ -31,8 +31,8 @@ int main(int argc, char* argv[])
         exit(0);
     }
     */
-
-    PixelImage* psdInput = ReadPSDFile("C:\\Users\\trevo\\Desktop\\psdTests\\ideal_alpha.psd");
+    
+    PixelImage* psdInput = ReadPSDFile("C:\\Users\\trevo\\Desktop\\psdTests\\veil_wall_01_b_normal.psd");
     //PixelImage* psdInput = ReadPSDFile(argv[1]);
 
     // Ensure image dimensions are powers of 2.  If not, increase them to the nearest
@@ -69,5 +69,5 @@ int main(int argc, char* argv[])
 
     //WriteDDSFile(&dds, argv[2]);
     WriteDDSFile(&dds, "C:\\users\\trevo\\desktop\\test.dds");
-    
+
 }

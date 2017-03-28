@@ -51,25 +51,19 @@ void ConstructPixelBlockFromImage(PixelImage* image, PixelBlock& block, int bx, 
 
     int pxCount = ((botRightX - topLeftX) + 1) * ((botRightY - topLeftY) + 1);
     int blockWidth = (botRightX - topLeftX) + 1;
+    int blockHeight = (botRightY - topLeftY) + 1;
 
     Vector3* sourceColors = (Vector3*)malloc(sizeof(Vector3) * pxCount);
-    for (int y = topLeftY; y <= botRightY; ++y)
+    for (int y = 0; y < blockHeight; ++y)
     {
-        for (int x = topLeftX; x <= botRightX; ++x)
+        for (int x = 0; x < blockWidth; ++x)
         {
             int index = y * blockWidth + x;
             sourceColors[index] = Vector3();
-            sourceColors[index].r = image->GetPixelChannelValue(x, y, 0);
-            sourceColors[index].g = image->GetPixelChannelValue(x, y, 1);
-            sourceColors[index].b = image->GetPixelChannelValue(x, y, 2);
+            sourceColors[index].r = image->GetPixelChannelValue(x + topLeftX, y + topLeftY, 0);
+            sourceColors[index].g = image->GetPixelChannelValue(x + topLeftX, y + topLeftY, 1);
+            sourceColors[index].b = image->GetPixelChannelValue(x + topLeftX, y + topLeftY, 2);
         }
-    }
-
-    // DEBUG
-    std::cout << "sourceColors = \n";
-    for (int i = 0; i < pxCount; ++i)
-    {
-        sourceColors[i].Print();
     }
 
     // To determine the color_0 and color_1 values, we calculate the line of best fit
@@ -84,31 +78,11 @@ void ConstructPixelBlockFromImage(PixelImage* image, PixelBlock& block, int bx, 
     }
     centroid /= float(pxCount);
 
-    std::cout << "Centroid = ";
-    centroid.Print();
-
-    // DEBUG
-    std::cout << "sourceColors = \n";
-    for (int i = 0; i < pxCount; ++i)
-    {
-        sourceColors[i].Print();
-    }
-
     // Calculate each color difference from centroid
     Vector3* offsets = (Vector3*)malloc(sizeof(Vector3) * pxCount);
     for (int i = 0; i < pxCount; ++i)
     {
         offsets[i] = sourceColors[i] - centroid;
-    }
-
-    std::cout << "Centroid = ";
-    centroid.Print();
-
-    // DEBUG
-    std::cout << "sourceColors = \n";
-    for (int i = 0; i < pxCount; ++i)
-    {
-        sourceColors[i].Print();
     }
 
     // Create the covariance matrix
@@ -276,14 +250,14 @@ CompressedImage* ConvertImageToBlocks(PixelImage* image)
     cImg->blockCountX = ceil(image->GetWidth() / 4.0);
     cImg->blockCountY = ceil(image->GetHeight() / 4.0);
 
-    PixelBlock* blocks = (PixelBlock*)malloc(sizeof(PixelBlock) * cImg->blockCountX * cImg->blockCountY);
+    cImg->blocks = (PixelBlock*)malloc(sizeof(PixelBlock) * cImg->blockCountX * cImg->blockCountY);
 
     for (int by = 0; by < cImg->blockCountY; ++by)
     {
         for (int bx = 0; bx < cImg->blockCountX; ++bx)
         {
             int blockIndex = by * cImg->blockCountX + bx;
-            ConstructPixelBlockFromImage(image, blocks[blockIndex], bx, by);
+            ConstructPixelBlockFromImage(image, cImg->blocks[blockIndex], bx, by);
         }
     }
 

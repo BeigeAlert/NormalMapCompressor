@@ -100,7 +100,8 @@ PixelImage* ReadPSDDataRLE(const char* data, unsigned int& position, const unsig
     PixelImage* result = new PixelImage(imgDetails.imageWidth, imgDetails.imageHeight);
     
     // skip over scanline byte counts... we live dangerously here... ;)
-    for (unsigned int c = 0; c < imgDetails.numChannels; ++c)
+    unsigned int c;
+    for (c = 0; c < imgDetails.numChannels; ++c)
     {
         for (unsigned int y = 0; y < imgDetails.imageHeight; ++y)
         {
@@ -108,7 +109,7 @@ PixelImage* ReadPSDDataRLE(const char* data, unsigned int& position, const unsig
         }
     }
     
-    for (unsigned int c = 0; c < imgDetails.numChannels; ++c)
+    for (c = 0; c < imgDetails.numChannels; ++c)
     {
         unsigned long long pxCount = imgDetails.imageWidth * imgDetails.imageHeight;
         unsigned long long pxPos = 0;
@@ -133,7 +134,7 @@ PixelImage* ReadPSDDataRLE(const char* data, unsigned int& position, const unsig
                     pxPos++;
                 }
             }
-            else if (header > -127)
+            else if (header >= -127)
             {
                 // -1 - -127
                 header = 1 - header;
@@ -226,6 +227,8 @@ PixelImage* ReadPSDFile(const char* fileName)
         int skipLength = GetUInt4(data, position, length);
         SkipBytes(position, skipLength, length);
     }
+
+
 
     PixelImage* result;
     int compressionMethod = GetUInt2(data, position, length);

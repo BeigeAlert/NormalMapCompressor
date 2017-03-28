@@ -174,10 +174,10 @@ PixelImage* PixelImage::FastMipResize() const
             {
                 for (unsigned int c = 0; c < NUM_CHANNELS; ++c)
                 {
-                    PixelType value =  (GetPixelChannelValue(x / 2, y / 2, c) +
-                                        GetPixelChannelValue(x / 2 + 1, y / 2, c) +
-                                        GetPixelChannelValue(x / 2, y / 2 + 1, c) +
-                                        GetPixelChannelValue(x / 2 + 1, y / 2 + 1, c)) * (PixelType)0.25;
+                    PixelType value =  (GetPixelChannelValue(x * 2, y * 2, c) +
+                                        GetPixelChannelValue(x * 2 + 1, y * 2, c) +
+                                        GetPixelChannelValue(x * 2, y * 2 + 1, c) +
+                                        GetPixelChannelValue(x * 2 + 1, y * 2 + 1, c)) * (PixelType)0.25;
                     resized->SetPixelChannelValue(x, y, c, value);
                 }
             }

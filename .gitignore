@@ -7,3 +7,5 @@
 *.idb
 *.ilk
 *.suo
+*.user
+*.opensdf

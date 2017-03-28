@@ -13,13 +13,13 @@ void WriteString(std::ofstream& writer, std::string str)
 
 void WriteUInt4(std::ofstream& writer, unsigned int value)
 {
-    writer.write((char*)value, 4);
+    writer.write((const char*)&value, 4);
 }
 
 void WriteColorBlock(std::ofstream& writer, const PixelBlock& block)
 {
-    writer.write((char*)block.color0, 2);
-    writer.write((char*)block.color1, 2);
+    writer.write((char*)&block.color0, 2);
+    writer.write((char*)&block.color1, 2);
     
     // each row is one byte (therefore each color is 2 bits)
     for (int row = 0; row < 4; ++row)
@@ -31,12 +31,13 @@ void WriteColorBlock(std::ofstream& writer, const PixelBlock& block)
             colorByte |= block.interp[index] << (column * 2);
         }
 
-        writer.write((char*)colorByte, 1);
+        writer.write((char*)&colorByte, 1);
     }
 }
 
 void WriteDDSFile(const CompressedMipMapTexture* dds, const char* filePath)
 {
+
     std::ofstream writer;
     writer.open(filePath, std::ios::out | std::ios::binary);
 
