@@ -40,6 +40,78 @@ int CompressColor(const Vector3& color)
     return value;
 }
 
+Vector3 DecompressColor(const int& color)
+{
+    float red = (color >> 11) / 31.0;
+    float green = ((color & 2016) >> 5) / 63.0;
+    float blue = (color & 31) / 31.0;
+    return Vector3(red, green, blue);
+}
+
+// calculate sum of squared distance to closest of the 4 points.
+float CalculateColorScore(const float* lineVals, const int pxCount, const float& pt0, const float& pt3)
+{
+    float sum = 0.0;
+    float pt1 = (pt0 * 2.0 + pt3) * 0.3333333;
+    float pt2 = (pt3 * 2.0 + pt0) * 0.3333333;
+    for (int i = 0; i < pxCount; ++i)
+    {
+        float diff0 = lineVals[i] - pt0;
+        float diff1 = lineVals[i] - pt1;
+        float diff2 = lineVals[i] - pt2;
+        float diff3 = lineVals[i] - pt3;
+        diff0 *= diff0;
+        diff1 *= diff1;
+        diff2 *= diff2;
+        diff3 *= diff3;
+        sum += fmin(fmin(fmin(diff0, diff1), diff2), diff3);
+    }
+
+    return sum;
+}
+
+void GetMaximumAndMinimum(const float* lineVals, const int pxCount, float& min, float& max)
+{
+    max = lineVals[0];
+    min = lineVals[0];
+    for (int i = 1; i < pxCount; ++i)
+    {
+        max = fmax(max, lineVals[i]);
+        min = fmin(min, lineVals[i]);
+    }
+}
+
+// Brute force of finding (approximately) the best two points that -- with two additional
+// points interpolated evenly between them -- will minimize the sum of squared distance
+// between the given point list and the closest of the 4 points.
+void FindOptimalColorPoints(const float* lineVals, const int pxCount, float& pt0, float& pt3)
+{
+    float min, max;
+    GetMaximumAndMinimum(lineVals, pxCount, min, max);
+    float diff = max - min;
+    float bestConfig[2] = { min, max };
+    float bestScore = CalculateColorScore(lineVals, pxCount, pt0, pt3);
+    const int numSteps = 64;
+    for (int p0 = 0; p0 < numSteps - 1; ++p0)
+    {
+        pt0 = (p0 / numSteps) * diff + min;
+        for (int p1 = p0 + 1; p1 < numSteps; ++p1)
+        {
+            pt3 = (p1 / numSteps) * diff + min;
+            float score = CalculateColorScore(lineVals, pxCount, pt0, pt3);
+            if (score < bestScore)
+            {
+                bestScore = score;
+                bestConfig[0] = pt0;
+                bestConfig[1] = pt3;
+            }
+        }
+    }
+    
+    pt0 = bestConfig[0];
+    pt3 = bestConfig[1];
+}
+
 void ConstructPixelBlockFromImage(PixelImage* image, PixelBlock& block, int bx, int by)
 {
 
@@ -115,12 +187,9 @@ void ConstructPixelBlockFromImage(PixelImage* image, PixelBlock& block, int bx, 
 
     Vector3 bestFitVector = rotation.GetColumn(largest);
     
-    // pick color_0 and color_1 based on max and min colors along the line...
-    // would almost certainly be better to choose colors based on the 4 evenly
-    // spaced colors that minimize sum of squared differences between the 16 pixel
-    // colors... but I don't have a clue how to do that. :(
-    // the method I'm settling for means that outliers will heavily influence the
-    // result... but maybe it will be okay... :/
+    // pick color_0 and color_1 based on trying to minimize the sum of squared distances
+    // between a point on the line, and the nearest of the 4 points (point 1 and 2, and 2
+    // points evenly spaced between them).
 
     float* lineVals = (float*)malloc(sizeof(float) * pxCount);
     for (int i = 0; i < pxCount; ++i)
@@ -128,28 +197,12 @@ void ConstructPixelBlockFromImage(PixelImage* image, PixelBlock& block, int bx, 
         lineVals[i] = offsets[i].dot(bestFitVector);
     }
 
-    // find the min and max values on the line
-    float minValue = lineVals[0];
-    float maxValue = lineVals[0];
-    int minValueIndex = 0;
-    int maxValueIndex = 0;
-    for (int i = 1; i < pxCount; ++i)
-    {
-        if (lineVals[i] < minValue)
-        {
-            minValue = lineVals[i];
-            minValueIndex = i;
-        }
-
-        if (lineVals[i] > maxValue)
-        {
-            maxValue = lineVals[i];
-            maxValueIndex = i;
-        }
-    }
-
-    Vector3& minColor = sourceColors[minValueIndex];
-    Vector3& maxColor = sourceColors[maxValueIndex];
+    float minValue;
+    float maxValue;
+    FindOptimalColorPoints(lineVals, pxCount, minValue, maxValue);
+    
+    Vector3 minColor = centroid + bestFitVector * minValue;
+    Vector3 maxColor = centroid + bestFitVector * maxValue;
 
     // DXT-1 uses the ordering of the colors to determine if alpha is present or not.
     // Since we never want alpha channel for normal map, we must always ensure that
@@ -157,22 +210,16 @@ void ConstructPixelBlockFromImage(PixelImage* image, PixelBlock& block, int bx, 
 
     // switching to the... rather deceptive names that the dxt format gives the colors.
     // color 0 and color 1 are the colors that color2 and color 3 interpolate between. :/
-    int color0Index;
-    int color1Index;
     int minColorComp = CompressColor(minColor);
     int maxColorComp = CompressColor(maxColor);
 
     if (minColorComp < maxColorComp)
     {
-        color1Index = minValueIndex;
-        color0Index = maxValueIndex;
         block.color1 = minColorComp;
         block.color0 = maxColorComp;
     }
     else if (maxColorComp < minColorComp)
     {
-        color1Index = maxValueIndex;
-        color0Index = minValueIndex;
         block.color1 = maxColorComp;
         block.color0 = minColorComp;
     }
@@ -189,12 +236,13 @@ void ConstructPixelBlockFromImage(PixelImage* image, PixelBlock& block, int bx, 
         return;
     }
 
-    // Calculate the "interp" value of each pixel in the block.  This value is the
-    // fraction of the value of color1 versus the value of color0 that will be the
-    // final color.
-    float color0LineVal = lineVals[color0Index];
-    float color1LineVal = lineVals[color1Index];
-    float diffInv = 1.0 / (color1LineVal - color0LineVal);
+    // Calculate the "interp" value of each pixel in the block.  This value is one of
+    // four possibilities to tell the decompressor which of the 4 colors of the block
+    // to use as the color:
+    // 0 - use color_0
+    // 1 - use color_1
+    // 2 - interpolate: 2 parts color_0, 1 part color_1
+    // 3 - interpolate: 1 part color_0, 2 parts color_1
 
     // Initialize values to color1.  A block might not hit all pixels, so make sure they're
     // set to 1.
@@ -203,43 +251,34 @@ void ConstructPixelBlockFromImage(PixelImage* image, PixelBlock& block, int bx, 
         block.interp[i] = 1;
     }
 
+    Vector3 colors[4];
+    colors[0] = DecompressColor(block.color0);
+    colors[1] = DecompressColor(block.color1);
+    colors[2] = (colors[0] * 2.0 + colors[1]) * 0.33333333;
+    colors[3] = (colors[1] * 2.0 + colors[0]) * 0.33333333;
+
+    // Set color interp value to the closest of the four colors.
     for (int i = 0; i < pxCount; ++i)
     {
-        float t = fmin(fmax((lineVals[i] - color0LineVal) * diffInv, 0.0), 1.0);
-        int zone = (t * 3.0) + 0.5;
-
         int x = i % blockWidth;
         int y = i / blockWidth;
-
-        // reverse the column order because... I don't know... that's the way it is in
-        // the spec!
-        // d c b a
-        // h g f e
-        // l k j i
-        // p o n m
-        //x = 3 - x;
-
         int index = y * 4 + x;
 
-        int& interp = block.interp[index];
+        Vector3& sourceColor = sourceColors[index];
 
-        switch(zone)
+        int bestIndex = 0;
+        float bestValue = (sourceColor - colors[0]).GetLengthSquared();
+        for (int j = 1; j < 4; ++j)
         {
-        case 0:
-            interp = 0;
-            break;
-        case 1:
-            interp = 2;
-            break;
-        case 2:
-            interp = 3;
-            break;
-        case 3:
-            interp = 1;
-            break;
-        default:
-            std::cerr << "something went wrong!!!" << std::endl;
+            float distSq = (sourceColor - colors[j]).GetLengthSquared();
+            if (distSq < bestValue)
+            {
+                bestIndex = j;
+                bestValue = distSq;
+            }
         }
+
+        block.interp[index] = bestIndex;
     }
 }
 
@@ -256,6 +295,7 @@ CompressedImage* ConvertImageToBlocks(PixelImage* image)
         for (int bx = 0; bx < cImg->blockCountX; ++bx)
         {
             int blockIndex = by * cImg->blockCountX + bx;
+            printf("calculating block %d, %d...\n", bx, by);
             ConstructPixelBlockFromImage(image, cImg->blocks[blockIndex], bx, by);
         }
     }
